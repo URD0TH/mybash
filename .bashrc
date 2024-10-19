@@ -629,5 +629,20 @@ fi
 
 export PATH=$PATH:"$HOME/.local/bin:$HOME/.cargo/bin:/var/lib/flatpak/exports/bin:/.local/share/flatpak/exports/bin"
 
+# Función para traer cambios del repositorio https://github.com/URD0TH/mybash.git
+mybashup() {
+    local repo_dir="$HOME/linuxtoolbox/mybash"
+    
+    if [ ! -d "$repo_dir" ]; then
+        echo "El directorio $repo_dir no existe. Clonando el repositorio..."
+        git clone https://github.com/URD0TH/mybash.git "$repo_dir"
+    else
+        echo "Actualizando el repositorio en $repo_dir..."
+        cd "$repo_dir" || return
+        git pull origin main
+    fi
+}
+
+
 eval "$(starship init bash)"
 eval "$(zoxide init bash)"
