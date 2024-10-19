@@ -17,7 +17,7 @@ fi
 if [ -d "$LINUXTOOLBOXDIR/mybash" ]; then rm -rf "$LINUXTOOLBOXDIR/mybash"; fi
 
 echo "${YELLOW}Cloning mybash repository into: $LINUXTOOLBOXDIR/mybash${RC}"
-git clone https://github.com/ChrisTitusTech/mybash "$LINUXTOOLBOXDIR/mybash"
+git clone https://github.com/URD0TH/mybash "$LINUXTOOLBOXDIR/mybash"
 if [ $? -eq 0 ]; then
     echo "${GREEN}Successfully cloned mybash repository${RC}"
 else
@@ -99,68 +99,36 @@ checkEnv() {
 
 installDepend() {
     ## Check for dependencies.
-    DEPENDENCIES='bash bash-completion tar bat tree multitail fastfetch wget unzip fontconfig'
-    if ! command_exists nvim; then
-        DEPENDENCIES="${DEPENDENCIES} neovim"
-    fi
-
+    DEPENDENCIES='bash bash-completion tar bat tree multitail wget unzip fontconfig fastfetch'
     echo "${YELLOW}Installing dependencies...${RC}"
     if [ "$PACKAGER" = "pacman" ]; then
-        if ! command_exists yay && ! command_exists paru; then
-            echo "Installing yay as AUR helper..."
-            ${SUDO_CMD} ${PACKAGER} --noconfirm -S base-devel
-            cd /opt && ${SUDO_CMD} git clone https://aur.archlinux.org/yay-git.git && ${SUDO_CMD} chown -R "${USER}:${USER}" ./yay-git
-            cd yay-git && makepkg --noconfirm -si
-        else
-            echo "AUR helper already installed"
-        fi
-        if command_exists yay; then
-            AUR_HELPER="yay"
-        elif command_exists paru; then
-            AUR_HELPER="paru"
-        else
-            echo "No AUR helper found. Please install yay or paru."
-            exit 1
-        fi
-        ${AUR_HELPER} --noconfirm -S ${DEPENDENCIES}
+        ${SUDO_CMD} ${PACKAGER} --noconfirm -S base-devel
+        ${SUDO_CMD} ${PACKAGER} --noconfirm -S ${DEPENDENCIES}
     elif [ "$PACKAGER" = "nala" ]; then
         ${SUDO_CMD} ${PACKAGER} install -y ${DEPENDENCIES}
     elif [ "$PACKAGER" = "emerge" ]; then
-        ${SUDO_CMD} ${PACKAGER} -v app-shells/bash app-shells/bash-completion app-arch/tar app-editors/neovim sys-apps/bat app-text/tree app-text/multitail app-misc/fastfetch
+        ${SUDO_CMD} ${PACKAGER} -v app-shells/bash app-shells/bash-completion app-arch/tar sys-apps/bat app-text/tree app-text/multitail app-misc/fastfetch
     elif [ "$PACKAGER" = "xbps-install" ]; then
         ${SUDO_CMD} ${PACKAGER} -v ${DEPENDENCIES}
     elif [ "$PACKAGER" = "nix-env" ]; then
-        ${SUDO_CMD} ${PACKAGER} -iA nixos.bash nixos.bash-completion nixos.gnutar nixos.neovim nixos.bat nixos.tree nixos.multitail nixos.fastfetch  nixos.pkgs.starship
+        ${SUDO_CMD} ${PACKAGER} -iA nixos.bash nixos.bash-completion nixos.gnutar nixos.bat nixos.tree nixos.multitail nixos.fastfetch nixos.pkgs.starship
     elif [ "$PACKAGER" = "dnf" ]; then
         ${SUDO_CMD} ${PACKAGER} install -y ${DEPENDENCIES}
     else
         ${SUDO_CMD} ${PACKAGER} install -yq ${DEPENDENCIES}
     fi
 
-    # Check to see if the MesloLGS Nerd Font is installed (Change this to whatever font you would like)
-    FONT_NAME="MesloLGS Nerd Font Mono"
-    if fc-list :family | grep -iq "$FONT_NAME"; then
-        echo "Font '$FONT_NAME' is installed."
+    # Check if fastfetch is installed; if not, install it
+    if ! command_exists fastfetch; then
+        echo "${YELLOW}Fastfetch not found, installing...${RC}"
+        LATEST_RELEASE=$(curl -s https://api.github.com/repos/fastfetch-cli/fastfetch/releases/latest | grep "browser_download_url" | cut -d '"' -f 4 | grep linux)
+        wget "$LATEST_RELEASE" -O fastfetch.tar.gz
+        tar -xzf fastfetch.tar.gz
+        ${SUDO_CMD} mv fastfetch /usr/local/bin/
+        rm fastfetch.tar.gz
+        echo "${GREEN}Fastfetch installed successfully.${RC}"
     else
-        echo "Installing font '$FONT_NAME'"
-        # Change this URL to correspond with the correct font
-        FONT_URL="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Meslo.zip"
-        FONT_DIR="$HOME/.local/share/fonts"
-        # check if the file is accessible
-        if wget -q --spider "$FONT_URL"; then
-            TEMP_DIR=$(mktemp -d)
-            wget -q --show-progress $FONT_URL -O "$TEMP_DIR"/"${FONT_NAME}".zip
-            unzip "$TEMP_DIR"/"${FONT_NAME}".zip -d "$TEMP_DIR"
-            mkdir -p "$FONT_DIR"/"$FONT_NAME"
-            mv "${TEMP_DIR}"/*.ttf "$FONT_DIR"/"$FONT_NAME"
-            # Update the font cache
-            fc-cache -fv
-            # delete the files created from this
-            rm -rf "${TEMP_DIR}"
-            echo "'$FONT_NAME' installed successfully."
-        else
-            echo "Font '$FONT_NAME' not installed. Font URL is not accessible."
-        fi
+        echo "${GREEN}Fastfetch is already installed.${RC}"
     fi
 }
 
@@ -192,46 +160,14 @@ installZoxide() {
         echo "${RED}Something went wrong during zoxide install!${RC}"
         exit 1
     fi
-}
 
-install_additional_dependencies() {
-    # we have PACKAGER so just use it
-    # for now just going to return early as we have already installed neovim in `installDepend`
-    # so I am not sure why we are trying to install it again
-    return
-   case "$PACKAGER" in
-        *apt)
-            if [ ! -d "/opt/neovim" ]; then
-                curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim.appimage
-                chmod u+x nvim.appimage
-                ./nvim.appimage --appimage-extract
-                ${SUDO_CMD} mv squashfs-root /opt/neovim
-                ${SUDO_CMD} ln -s /opt/neovim/AppRun /usr/bin/nvim
-            fi
-            ;;
-        *zypper)
-            ${SUDO_CMD} zypper refresh
-            ${SUDO_CMD} zypper -n install neovim # -y doesn't work on opensuse -n is short for -non-interactive which is equivalent to -y
-            ;;
-        *dnf)
-            ${SUDO_CMD} dnf check-update
-            ${SUDO_CMD} dnf install -y neovim
-            ;;
-        *pacman)
-            ${SUDO_CMD} pacman -Syu
-            ${SUDO_CMD} pacman -S --noconfirm neovim
-            ;;
-        *)
-            echo "No supported package manager found. Please install neovim manually."
-            exit 1
-            ;;
-    esac
+    echo "${YELLOW}Note: /home/${USER}/.local/bin is not on your \$PATH. zoxide will not work unless it is added to \$PATH.${RC}"
 }
 
 create_fastfetch_config() {
     ## Get the correct user home directory.
     USER_HOME=$(getent passwd "${SUDO_USER:-$USER}" | cut -d: -f6)
-    
+
     if [ ! -d "$USER_HOME/.config/fastfetch" ]; then
         mkdir -p "$USER_HOME/.config/fastfetch"
     fi
@@ -273,7 +209,6 @@ checkEnv
 installDepend
 installStarshipAndFzf
 installZoxide
-install_additional_dependencies
 create_fastfetch_config
 
 if linkConfig; then
