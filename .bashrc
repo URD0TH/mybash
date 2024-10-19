@@ -62,11 +62,11 @@ if [[ $iatest -gt 0 ]]; then bind "set completion-ignore-case on"; fi
 if [[ $iatest -gt 0 ]]; then bind "set show-all-if-ambiguous On"; fi
 
 # Set the default editor
-export EDITOR=nvim
-export VISUAL=nvim
+export EDITOR=nano
+export VISUAL=nano
 alias spico='sudo pico'
 alias snano='sudo nano'
-alias vim='nvim'
+alias vim='nano'
 
 # To have colors for ls and all grep commands such as grep, egrep and zgrep
 export CLICOLOR=1
@@ -129,7 +129,8 @@ alias da='date "+%Y-%m-%d %A %T %Z"'
 # Alias's to modified commands
 alias cp='cp -i'
 alias mv='mv -i'
-alias rm='trash -v'
+alias rm='rm -rf'
+alias srm='sudo rm -rf'
 alias mkdir='mkdir -p'
 alias ps='ps auxf'
 alias ping='ping -c 10'
@@ -138,14 +139,13 @@ alias cls='clear'
 alias apt-get='sudo apt-get'
 alias multitail='multitail --no-repeat -c'
 alias freshclam='sudo freshclam'
-alias vi='nvim'
+alias vi='nano'
 alias svi='sudo vi'
-alias vis='nvim "+set si"'
+alias vis='nano "+set si"'
 
 
 # Change directory aliases
 alias home='cd ~'
-alias cd..='cd ..'
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
@@ -154,8 +154,6 @@ alias .....='cd ../../../..'
 # cd into the old directory
 alias bd='cd "$OLDPWD"'
 
-# Remove a directory and all files
-alias rmd='/bin/rm  --recursive --force --verbose '
 
 # Alias's for multiple directory listing commands
 alias la='ls -Alh'                # show hidden files
@@ -242,6 +240,8 @@ alias docker-clean=' \
   docker image prune -f ; \
   docker network prune -f ; \
   docker volume prune -f '
+
+alias dcud='docker compose up -d'
 
 #######################################################
 # SPECIAL FUNCTIONS
