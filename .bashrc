@@ -639,7 +639,7 @@ mybashup() {
     else
         echo "Actualizando el repositorio en $repo_dir..."
         cd "$repo_dir" || return
-        git pull origin main
+        git pull origin origin
     fi
 }
 
