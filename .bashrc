@@ -635,7 +635,7 @@ fi
 export PATH=$PATH:"$HOME/.local/bin:$HOME/.cargo/bin:/var/lib/flatpak/exports/bin:/.local/share/flatpak/exports/bin"
 
 # Función para traer cambios del repositorio https://github.com/URD0TH/mybash.git
-mybashup() {
+mybash() {
     local repo_dir="$HOME/linuxtoolbox/mybash"
     
     if [ ! -d "$repo_dir" ]; then
@@ -644,11 +644,31 @@ mybashup() {
     else
         echo "Actualizando el repositorio en $repo_dir..."
         cd "$repo_dir" || return
-        git pull origin origin -f
+        
+        # Obtener los últimos cambios sin aplicarlos
+        git fetch origin
+        
+        # Mostrar diferencias
+        echo -e "\n=== Diferencias entre local y remoto ==="
+        git diff HEAD..origin/origin
+        
+        # Preguntar si desea continuar
+        read -p "¿Desea continuar con la actualización? (s/n): " respuesta
+        if [[ $respuesta =~ ^[Ss]$ ]]; then
+            
+            # Forzar la actualización desde el remoto
+            git reset --hard origin/origin
+                        
+            source ~/.bashrc
+        else
+            echo "Actualización cancelada"
+        fi
     fi
-    source ~/.bashrc
 }
 
 
 eval "$(starship init bash)"
 eval "$(zoxide init bash)"
+
+
+
