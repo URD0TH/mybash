@@ -103,7 +103,7 @@ checkEnv() {
 
 installDepend() {
     ## Check for dependencies.
-    DEPENDENCIES='bash bash-completion tar bat tree multitail wget unzip fontconfig fastfetch'
+    DEPENDENCIES='bash bash-completion tar bat tree multitail wget unzip fontconfig'
     echo "${YELLOW}Installing dependencies...${RC}"
     if [ "$PACKAGER" = "pacman" ]; then
         ${SUDO_CMD} ${PACKAGER} --noconfirm -S base-devel
