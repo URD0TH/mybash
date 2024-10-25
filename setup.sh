@@ -122,17 +122,27 @@ installDepend() {
         ${SUDO_CMD} ${PACKAGER} install -yq ${DEPENDENCIES}
     fi
 
-    # Check if fastfetch is installed; if not, install it
+    # Modificar la sección de instalación de fastfetch
     if ! command_exists fastfetch; then
-        echo "${YELLOW}Fastfetch not found, installing...${RC}"
-        LATEST_RELEASE=$(curl -s https://api.github.com/repos/fastfetch-cli/fastfetch/releases/latest | grep "browser_download_url" | cut -d '"' -f 4 | grep linux)
-        wget "$LATEST_RELEASE" -O fastfetch.tar.gz
-        tar -xzf fastfetch.tar.gz
+        echo "${YELLOW}Fastfetch no encontrado, instalando desde GitHub...${RC}"
+        TEMP_DIR=$(mktemp -d)
+        cd "$TEMP_DIR" || exit 1
+        
+        # Descargar la última versión
+        LATEST_RELEASE=$(curl -s https://api.github.com/repos/fastfetch-cli/fastfetch/releases/latest | grep "browser_download_url" | grep "Linux.*tar.gz" | cut -d '"' -f 4 | head -n 1)
+        if [ -z "$LATEST_RELEASE" ]; then
+            echo "${RED}No se pudo obtener la última versión de fastfetch${RC}"
+            exit 1
+        }
+        
+        wget "$LATEST_RELEASE" -O "$USER_HOME/Downloads/fastfetch.tar.gz"
+        tar -xzf "$USER_HOME/Downloads/fastfetch.tar.gz"        
         ${SUDO_CMD} mv fastfetch /usr/local/bin/
-        rm fastfetch.tar.gz
-        echo "${GREEN}Fastfetch installed successfully.${RC}"
+        cd - || exit 1
+        rm -rf "$TEMP_DIR"
+        echo "${GREEN}Fastfetch instalado correctamente${RC}"
     else
-        echo "${GREEN}Fastfetch is already installed.${RC}"
+        echo "${GREEN}Fastfetch ya está instalado${RC}"
     fi
 }
 
