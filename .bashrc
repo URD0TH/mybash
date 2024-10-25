@@ -636,7 +636,7 @@ export PATH=$PATH:"$HOME/.local/bin:$HOME/.cargo/bin:/var/lib/flatpak/exports/bi
 
 # Función para traer cambios del repositorio https://github.com/URD0TH/mybash.git
 mybash() {
-    local repo_dir="$HOME/linuxtoolbox/mybash"
+    local repo_dir="$HOME/github/mybash"
     
     if [ ! -d "$repo_dir" ]; then
         echo "El directorio $repo_dir no existe. Clonando el repositorio..."
