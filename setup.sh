@@ -139,7 +139,7 @@ installDepend() {
         sudo wget --progress=bar:force -L "$LATEST_RELEASE" -O "$TEMP_DIR/fastfetch-linux-amd64.deb"
         ${SUDO_CMD} dpkg -i "$TEMP_DIR/fastfetch-linux-amd64.deb"
         cd - || exit 1
-        rm -rf "$TEMP_DIR"
+        sudo rm -rf "$TEMP_DIR"
         echo "${GREEN}Fastfetch instalado correctamente${RC}"
     else
         echo "${GREEN}Fastfetch ya está instalado${RC}"
