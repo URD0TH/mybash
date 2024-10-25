@@ -129,16 +129,15 @@ installDepend() {
         cd "$TEMP_DIR" || exit 1
         
         echo "${YELLOW}Obteniendo información de la última versión...${RC}"
-        LATEST_RELEASE=$(curl -v https://api.github.com/repos/fastfetch-cli/fastfetch/releases/latest | grep "browser_download_url" | grep "fastfetch-linux-amd64.tar.gz" | cut -d '"' -f 4)
+        LATEST_RELEASE=$(curl -v https://api.github.com/repos/fastfetch-cli/fastfetch/releases/latest | grep "browser_download_url" | grep "fastfetch-linux-amd64.deb" | cut -d '"' -f 4)
         if [ -z "$LATEST_RELEASE" ]; then
             echo "${RED}No se pudo obtener la última versión de fastfetch${RC}"
             exit 1
         fi
         
         echo "${YELLOW}Descargando fastfetch desde: $LATEST_RELEASE${RC}"
-        wget --progress=bar:force -L "$LATEST_RELEASE" -O "$TEMP_DIR/fastfetch.tar.gz"
-        tar -xvf "$TEMP_DIR/fastfetch.tar.gz"        
-        ${SUDO_CMD} mv "$TEMP_DIR/fastfetch-linux-amd64/usr/bin/fastfetch" /usr/local/bin/
+        wget --progress=bar:force -L "$LATEST_RELEASE" -O "$TEMP_DIR/fastfetch-linux-amd64.deb"
+        ${SUDO_CMD} dpkg -i "$TEMP_DIR/fastfetch-linux-amd64.deb"
         cd - || exit 1
         rm -rf "$TEMP_DIR"
         echo "${GREEN}Fastfetch instalado correctamente${RC}"
