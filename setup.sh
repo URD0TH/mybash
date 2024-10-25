@@ -136,7 +136,7 @@ installDepend() {
         fi
         
         echo "${YELLOW}Descargando fastfetch desde: $LATEST_RELEASE${RC}"
-        wget --progress=bar:force -L "$LATEST_RELEASE" -O "$TEMP_DIR/fastfetch-linux-amd64.deb"
+        sudo wget --progress=bar:force -L "$LATEST_RELEASE" -O "$TEMP_DIR/fastfetch-linux-amd64.deb"
         ${SUDO_CMD} dpkg -i "$TEMP_DIR/fastfetch-linux-amd64.deb"
         cd - || exit 1
         rm -rf "$TEMP_DIR"
