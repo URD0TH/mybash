@@ -29,9 +29,9 @@ fi
 PACKAGER=""
 SUDO_CMD=""
 SUGROUP=""
-GITPATH=""
+GITPATH="$LINUXTOOLBOXDIR/mybash"
 
-cd "$LINUXTOOLBOXDIR/mybash" || exit
+cd "$GITPATH" || exit
 
 command_exists() {
     command -v "$1" >/dev/null 2>&1
