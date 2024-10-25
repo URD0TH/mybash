@@ -14,15 +14,19 @@ if [ ! -d "$LINUXTOOLBOXDIR" ]; then
     echo "${GREEN}linuxtoolbox directory created: $LINUXTOOLBOXDIR${RC}"
 fi
 
-if [ -d "$LINUXTOOLBOXDIR/mybash" ]; then rm -rf "$LINUXTOOLBOXDIR/mybash"; fi
-
-echo "${YELLOW}Cloning mybash repository into: $LINUXTOOLBOXDIR/mybash${RC}"
-git clone https://github.com/URD0TH/mybash "$LINUXTOOLBOXDIR/mybash"
-if [ $? -eq 0 ]; then
-    echo "${GREEN}Successfully cloned mybash repository${RC}"
+if [ -d "$LINUXTOOLBOXDIR/mybash" ]; then 
+    echo "${YELLOW}El directorio mybash ya existe. Usando el directorio actual.${RC}"
+    GITPATH="$LINUXTOOLBOXDIR/mybash"
 else
-    echo "${RED}Failed to clone mybash repository${RC}"
-    exit 1
+    echo "${YELLOW}Cloning mybash repository into: $LINUXTOOLBOXDIR/mybash${RC}"
+    git clone https://github.com/URD0TH/mybash "$LINUXTOOLBOXDIR/mybash"
+    if [ $? -eq 0 ]; then
+        echo "${GREEN}Successfully cloned mybash repository${RC}"
+        GITPATH="$LINUXTOOLBOXDIR/mybash"
+    else
+        echo "${RED}Failed to clone mybash repository${RC}"
+        exit 1
+    fi
 fi
 
 # add variables to top level so can easily be accessed by all functions
