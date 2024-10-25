@@ -138,7 +138,7 @@ installDepend() {
         echo "${YELLOW}Descargando fastfetch desde: $LATEST_RELEASE${RC}"
         wget --progress=bar:force -L "$LATEST_RELEASE" -O "$TEMP_DIR/fastfetch.tar.gz"
         tar -xvf "$TEMP_DIR/fastfetch.tar.gz"        
-        ${SUDO_CMD} mv "$TEMP_DIR/fastfetch" /usr/local/bin/
+        ${SUDO_CMD} mv "$TEMP_DIR/fastfetch-linux-amd64/usr/bin/fastfetch" /usr/local/bin/
         cd - || exit 1
         rm -rf "$TEMP_DIR"
         echo "${GREEN}Fastfetch instalado correctamente${RC}"
