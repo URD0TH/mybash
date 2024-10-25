@@ -247,6 +247,7 @@ alias docker-clean=' \
   docker volume prune -f '
 
 alias dcud='docker compose up -d'
+alias dcudf='docker compose up -d --force-recreate'
 
 #######################################################
 # SPECIAL FUNCTIONS
