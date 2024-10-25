@@ -122,7 +122,7 @@ installDepend() {
         ${SUDO_CMD} ${PACKAGER} install -yq ${DEPENDENCIES}
     fi
 
-    # Modificar la sección de instalación de fastfetch
+    # verificar si fastfetch está instalado y si no lo está lo instala
     if ! command_exists fastfetch; then
         echo "${YELLOW}Fastfetch no encontrado, instalando desde GitHub...${RC}"
         TEMP_DIR=$(mktemp -d)
