@@ -118,7 +118,8 @@ alias web='cd /var/www/html'
 alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
 
 # Edit this .bashrc file
-alias ebrc='edit ~/.bashrc'
+alias ebash='edit ~/.bashrc'
+alias sbash='source ~/.bashrc'
 
 # Show help for this .bashrc file
 alias hlp='less ~/.bashrc_help'
@@ -136,7 +137,11 @@ alias ps='ps auxf'
 alias ping='ping -c 10'
 alias less='less -R'
 alias cls='clear'
-alias apt-get='sudo apt-get'
+alias snala='sudo nala'
+alias snalai='sudo nala install'
+alias snalaupg='sudo nala update'
+alias snalar='sudo nala remove'
+alias snalaupd='sudo nala upgrade'
 alias multitail='multitail --no-repeat -c'
 alias freshclam='sudo freshclam'
 alias vi='nano'
@@ -641,6 +646,7 @@ mybashup() {
         cd "$repo_dir" || return
         git pull origin origin
     fi
+    source ~/.bashrc
 }
 
 
