@@ -644,7 +644,7 @@ mybashup() {
     else
         echo "Actualizando el repositorio en $repo_dir..."
         cd "$repo_dir" || return
-        git pull origin origin
+        git pull origin origin -f
     fi
     source ~/.bashrc
 }
