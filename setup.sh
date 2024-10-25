@@ -133,11 +133,11 @@ installDepend() {
         if [ -z "$LATEST_RELEASE" ]; then
             echo "${RED}No se pudo obtener la última versión de fastfetch${RC}"
             exit 1
-        }
+        fi
         
         wget "$LATEST_RELEASE" -O "$USER_HOME/Downloads/fastfetch.tar.gz"
         tar -xzf "$USER_HOME/Downloads/fastfetch.tar.gz"        
-        ${SUDO_CMD} mv fastfetch /usr/local/bin/
+        ${SUDO_CMD} mv "$USER_HOME/Downloads/fastfetch" /usr/local/bin/
         cd - || exit 1
         rm -rf "$TEMP_DIR"
         echo "${GREEN}Fastfetch instalado correctamente${RC}"
