@@ -6,7 +6,7 @@ YELLOW='\033[33m'
 GREEN='\033[32m'
 
 # Check if the home directory and linuxtoolbox folder exist, create them if they don't
-LINUXTOOLBOXDIR="$HOME/linuxtoolbox"
+LINUXTOOLBOXDIR="$HOME/github"
 
 if [ ! -d "$LINUXTOOLBOXDIR" ]; then
     echo "${YELLOW}Creating linuxtoolbox directory: $LINUXTOOLBOXDIR${RC}"
