@@ -505,7 +505,7 @@ install_bashrc_support() {
 }
 
 # IP address lookup
-alias whatismyip="whatsmyip"
+alias cualesmiip="whatsmyip"
 function whatsmyip () {
     # Internal IP Lookup.
     if command -v ip &> /dev/null; then
