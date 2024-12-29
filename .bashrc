@@ -668,6 +668,11 @@ mybash() {
     fi
 }
 
+# Cargar alias desde .bash_alias si existe
+if [ -f ~/.bash_aliases ]; then
+    source ~/.bash_aliases
+fi
+
 
 eval "$(starship init bash)"
 eval "$(zoxide init bash)"
