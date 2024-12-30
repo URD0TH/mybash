@@ -217,6 +217,11 @@ linkConfig() {
         echo "${RED}Failed to create symbolic link for starship.toml${RC}"
         exit 1
     }
+    }
+    ln -svf "$GITPATH/.bash_aliases" "$USER_HOME/.bash_aliases" || {
+        echo "${RED}Failed to create symbolic link for .bash_aliases${RC}"
+        exit 1
+    }
 }
 
 checkEnv
