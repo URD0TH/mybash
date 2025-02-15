@@ -31,24 +31,26 @@ setup_directories() {
         print_colored "$GREEN" "linuxtoolbox directory created: $LINUXTOOLBOXDIR"
     fi
 
-    # SI $LINUXTOOLBOXDIR/mybash EXISTE, SE BORRA
+    # SI $LINUXTOOLBOXDIR/mybash EXISTE Y SI EXISTE SE ACTUALIZA
     if [ -d "$LINUXTOOLBOXDIR/mybash" ]; then 
-        cd $LINUXTOOLBOXDIR/mybash;
-        git status;
-        git fetch origin;
-        git pull origin main;
-    fi
-
-    print_colored "$YELLOW" "Cloning mybash repository into: $LINUXTOOLBOXDIR/mybash"
-    
-    if git clone https://github.com/ChrisTitusTech/mybash "$LINUXTOOLBOXDIR/TEMP"; then
-        print_colored "$GREEN" "Successfully cloned mybash repository"
+        cd "$LINUXTOOLBOXDIR/mybash"
+        git status
+        git fetch origin
+        git pull origin
     else
-        print_colored "$RED" "Failed to clone mybash repository"
-        exit 1
-    fi
+        cd "$LINUXTOOLBOXDIR"
+        print_colored "$YELLOW" "Creating mybash directory: $LINUXTOOLBOXDIR/mybash"
+        print_colored "$YELLOW" "Cloning mybash repository into: $LINUXTOOLBOXDIR/mybash"
+    
+        if git clone https://github.com/URD0TH/mybash "$LINUXTOOLBOXDIR/mybash"; then
+            print_colored "$GREEN" "Successfully cloned mybash repository"
+        else
+            print_colored "$RED" "Failed to clone mybash repository"
+            exit 1
+        fi
 
-    cd "$LINUXTOOLBOXDIR/mybash" || exit
+        cd "$LINUXTOOLBOXDIR/mybash" || exit
+    fi
 }
 
 check_environment() {
