@@ -6,12 +6,11 @@ RED=$(tput setaf 1)
 YELLOW=$(tput setaf 3)
 GREEN=$(tput setaf 2)
 
-# add variables to top level so can easily be accessed by all functions
+LINUXTOOLBOXDIR="$HOME/github"
 PACKAGER=""
 SUDO_CMD=""
 SUGROUP=""
-LINUXTOOLBOXDIR="$HOME/github"
-GITPATH="$LINUXTOOLBOXDIR/mybash"
+GITPATH=""
 
 # Helper functions
 print_colored() {
@@ -22,49 +21,34 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
-check_directory_permissions() {
-    local dir="$1"
-    if [ ! -w "$(dirname "$dir")" ]; then
-        print_colored "$RED" "Cannot write to directory: $(dirname "$dir")"
-        return 1
-    fi
-    return 0
-}
-
 # Setup functions
-setup_directories() {
-    # Check write permissions before creating directories
-    if ! check_directory_permissions "$LINUXTOOLBOXDIR"; then
-        print_colored "$RED" "Insufficient permissions to create/modify $LINUXTOOLBOXDIR"
-        exit 1
-    fi
 
+setup_directories() {
+    # CREARE LINUXTOOLBOX DIRECTORY SI NI EXISTE
     if [ ! -d "$LINUXTOOLBOXDIR" ]; then
         print_colored "$YELLOW" "Creating linuxtoolbox directory: $LINUXTOOLBOXDIR"
         mkdir -p "$LINUXTOOLBOXDIR"
         print_colored "$GREEN" "linuxtoolbox directory created: $LINUXTOOLBOXDIR"
     fi
 
-    # Check if directory exists and is writable
+    # SI $LINUXTOOLBOXDIR/mybash EXISTE, SE BORRA
     if [ -d "$LINUXTOOLBOXDIR/mybash" ]; then 
-        if ! rm -rf "$LINUXTOOLBOXDIR/mybash"; then
-            print_colored "$RED" "Failed to remove existing mybash directory"
-            exit 1
-        fi
+        cd $LINUXTOOLBOXDIR/mybash;
+        git status;
+        git fetch origin;
+        git pull origin main;
     fi
 
     print_colored "$YELLOW" "Cloning mybash repository into: $LINUXTOOLBOXDIR/mybash"
-    if git clone https://github.com/URD0TH/mybash "$LINUXTOOLBOXDIR/mybash"; then
+    
+    if git clone https://github.com/ChrisTitusTech/mybash "$LINUXTOOLBOXDIR/TEMP"; then
         print_colored "$GREEN" "Successfully cloned mybash repository"
     else
         print_colored "$RED" "Failed to clone mybash repository"
         exit 1
     fi
 
-    if ! cd "$LINUXTOOLBOXDIR/mybash"; then
-        print_colored "$RED" "Failed to change directory to mybash"
-        exit 1
-    fi
+    cd "$LINUXTOOLBOXDIR/mybash" || exit
 }
 
 check_environment() {
@@ -103,6 +87,7 @@ check_environment() {
     printf "Using %s as privilege escalation software\n" "$SUDO_CMD"
 
     # Check write permissions
+    GITPATH=$(dirname "$(realpath "$0")")
     if [ ! -w "$GITPATH" ]; then
         print_colored "$RED" "Can't write to $GITPATH"
         exit 1
@@ -118,7 +103,6 @@ check_environment() {
         fi
     done
 
-    # Check if member of the sudo group
     if ! groups | grep -q "$SUGROUP"; then
         print_colored "$RED" "You need to be a member of the sudo group to run me!"
         exit 1
@@ -165,12 +149,10 @@ install_dependencies() {
 install_pacman_dependencies() {
     if ! command_exists yay && ! command_exists paru; then
         printf "Installing yay as AUR helper...\n"
-        CURRENT_DIR=$(pwd)
         ${SUDO_CMD} ${PACKAGER} --noconfirm -S base-devel
         cd /opt && ${SUDO_CMD} git clone https://aur.archlinux.org/yay-git.git && ${SUDO_CMD} chown -R "${USER}:${USER}" ./yay-git
         cd yay-git && makepkg --noconfirm -si
-        cd "$CURRENT_DIR" # Return to original directory
-    else    
+    else
         printf "AUR helper already installed\n"
     fi
     if command_exists yay; then
@@ -186,55 +168,32 @@ install_pacman_dependencies() {
 
 install_font() {
     FONT_NAME="MesloLGS Nerd Font Mono"
-    if ! fc-list :family | grep -iq "$FONT_NAME"; then
+    if fc-list :family | grep -iq "$FONT_NAME"; then
+        printf "Font '%s' is installed.\n" "$FONT_NAME"
+    else
         printf "Installing font '%s'\n" "$FONT_NAME"
         FONT_URL="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Meslo.zip"
         FONT_DIR="$HOME/.local/share/fonts"
-        TEMP_DIR=$(mktemp -d)
-        TEMP_ZIP="$TEMP_DIR/Meslo.zip"
-
         if wget -q --spider "$FONT_URL"; then
-            if wget -q "$FONT_URL" -O "$TEMP_ZIP"; then
-                mkdir -p "$FONT_DIR/$FONT_NAME"
-                if unzip -q "$TEMP_ZIP" -d "$TEMP_DIR/extracted" && \
-                   mv "$TEMP_DIR/extracted"/*.ttf "$FONT_DIR/$FONT_NAME/"; then
-                    # Update the font cache
-                    fc-cache -fv
-                    printf "'%s' installed successfully.\n" "$FONT_NAME"
-                else
-                    print_colored "$RED" "Failed to extract or move font files."
-                fi
-            else
-                print_colored "$RED" "Failed to download font."
-            fi
-        else            
+            TEMP_DIR=$(mktemp -d)
+            wget -q $FONT_URL -O "$TEMP_DIR"/"${FONT_NAME}".zip
+            unzip "$TEMP_DIR"/"${FONT_NAME}".zip -d "$TEMP_DIR"
+            mkdir -p "$FONT_DIR"/"$FONT_NAME"
+            mv "${TEMP_DIR}"/*.ttf "$FONT_DIR"/"$FONT_NAME"
+            # Update the font cache
+            fc-cache -fv
+            rm -rf "${TEMP_DIR}"
+            printf "'%s' installed successfully.\n" "$FONT_NAME"
+        else
             printf "Font '%s' not installed. Font URL is not accessible.\n" "$FONT_NAME"
         fi
-        # Cleanup
-        rm -rf "$TEMP_DIR"
-    else
-        printf "Font '%s' is already installed.\n" "$FONT_NAME"
     fi
 }
 
 install_starship_and_fzf() {
     if ! command_exists starship; then
-        print_colored "$YELLOW" "Installing Starship..."
-        # First install rustup if needed
-        if ! command_exists rustup; then
-            if curl -sS https://sh.rustup.rs | sh -s -- -y; then
-                # Source cargo environment
-                . "$HOME/.cargo/env"
-            else
-                print_colored "$RED" "Failed to install rustup!"
-                exit 1
-            fi
-        fi
-        # Then install starship
-        if curl -sS https://starship.rs/install.sh | sh; then
-            print_colored "$GREEN" "Starship installed successfully"
-        else
-            print_colored "$RED" "Failed to install Starship!"
+        if ! curl -sS https://starship.rs/install.sh | sh; then
+            print_colored "$RED" "Something went wrong during starship install!"
             exit 1
         fi
     else
@@ -245,13 +204,8 @@ install_starship_and_fzf() {
         if [ -d "$HOME/.fzf" ]; then
             print_colored "$YELLOW" "FZF directory already exists. Skipping installation."
         else
-            print_colored "$YELLOW" "Installing FZF..."
-            if git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && ~/.fzf/install; then
-                print_colored "$GREEN" "FZF installed successfully"
-            else
-                print_colored "$RED" "Failed to install FZF!"
-                exit 1
-            fi
+            git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+            ~/.fzf/install
         fi
     else
         printf "Fzf already installed\n"
@@ -287,7 +241,8 @@ link_config() {
     USER_HOME=$(getent passwd "${SUDO_USER:-$USER}" | cut -d: -f6)
     OLD_BASHRC="$USER_HOME/.bashrc"
     BASH_PROFILE="$USER_HOME/.bash_profile"
-    if [ -e "$OLD_BASHRC" ]; then 
+    
+    if [ -e "$OLD_BASHRC" ]; then
         print_colored "$YELLOW" "Moving old bash config file to $USER_HOME/.bashrc.bak"
         if ! mv "$OLD_BASHRC" "$USER_HOME/.bashrc.bak"; then
             print_colored "$RED" "Can't move the old bash config file!"
@@ -312,8 +267,8 @@ link_config() {
 }
 
 # Main execution
-check_environment # Moved before setup_directories to check system requirements first
 setup_directories
+check_environment
 install_dependencies
 install_starship_and_fzf
 install_zoxide
