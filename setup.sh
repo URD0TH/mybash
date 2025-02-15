@@ -6,13 +6,11 @@ RED=$(tput setaf 1)
 YELLOW=$(tput setaf 3)
 GREEN=$(tput setaf 2)
 
-# Check if the home directory and linuxtoolbox folder exist, create them if they don't
-LINUXTOOLBOXDIR="$HOME/github"
-
 # add variables to top level so can easily be accessed by all functions
 PACKAGER=""
 SUDO_CMD=""
 SUGROUP=""
+LINUXTOOLBOXDIR="$HOME/github"
 GITPATH="$LINUXTOOLBOXDIR/mybash"
 
 # Helper functions
@@ -24,15 +22,36 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
+check_directory_permissions() {
+    local dir="$1"
+    if [ ! -w "$(dirname "$dir")" ]; then
+        print_colored "$RED" "Cannot write to directory: $(dirname "$dir")"
+        return 1
+    fi
+    return 0
+}
+
 # Setup functions
 setup_directories() {
+    # Check write permissions before creating directories
+    if ! check_directory_permissions "$LINUXTOOLBOXDIR"; then
+        print_colored "$RED" "Insufficient permissions to create/modify $LINUXTOOLBOXDIR"
+        exit 1
+    fi
+
     if [ ! -d "$LINUXTOOLBOXDIR" ]; then
         print_colored "$YELLOW" "Creating linuxtoolbox directory: $LINUXTOOLBOXDIR"
         mkdir -p "$LINUXTOOLBOXDIR"
         print_colored "$GREEN" "linuxtoolbox directory created: $LINUXTOOLBOXDIR"
     fi
 
-    if [ -d "$LINUXTOOLBOXDIR/mybash" ]; then rm -rf "$LINUXTOOLBOXDIR/mybash"; fi
+    # Check if directory exists and is writable
+    if [ -d "$LINUXTOOLBOXDIR/mybash" ]; then 
+        if ! rm -rf "$LINUXTOOLBOXDIR/mybash"; then
+            print_colored "$RED" "Failed to remove existing mybash directory"
+            exit 1
+        fi
+    fi
 
     print_colored "$YELLOW" "Cloning mybash repository into: $LINUXTOOLBOXDIR/mybash"
     if git clone https://github.com/URD0TH/mybash "$LINUXTOOLBOXDIR/mybash"; then
@@ -42,7 +61,10 @@ setup_directories() {
         exit 1
     fi
 
-    cd "$LINUXTOOLBOXDIR/mybash" || exit
+    if ! cd "$LINUXTOOLBOXDIR/mybash"; then
+        print_colored "$RED" "Failed to change directory to mybash"
+        exit 1
+    fi
 }
 
 check_environment() {
@@ -143,9 +165,11 @@ install_dependencies() {
 install_pacman_dependencies() {
     if ! command_exists yay && ! command_exists paru; then
         printf "Installing yay as AUR helper...\n"
+        CURRENT_DIR=$(pwd)
         ${SUDO_CMD} ${PACKAGER} --noconfirm -S base-devel
         cd /opt && ${SUDO_CMD} git clone https://aur.archlinux.org/yay-git.git && ${SUDO_CMD} chown -R "${USER}:${USER}" ./yay-git
         cd yay-git && makepkg --noconfirm -si
+        cd "$CURRENT_DIR" # Return to original directory
     else    
         printf "AUR helper already installed\n"
     fi
@@ -162,31 +186,55 @@ install_pacman_dependencies() {
 
 install_font() {
     FONT_NAME="MesloLGS Nerd Font Mono"
-    if fc-list :family | grep -iq "$FONT_NAME"; then
+    if ! fc-list :family | grep -iq "$FONT_NAME"; then
         printf "Installing font '%s'\n" "$FONT_NAME"
         FONT_URL="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Meslo.zip"
         FONT_DIR="$HOME/.local/share/fonts"
+        TEMP_DIR=$(mktemp -d)
+        TEMP_ZIP="$TEMP_DIR/Meslo.zip"
+
         if wget -q --spider "$FONT_URL"; then
-            TEMP_DIR=$(mktemp -d)
-            wget -q $FONT_URL -O "$TEMP_DIR"/"${FONT_NAME}".zip
-            unzip "$TEMP_DIR"/"${FONT_NAME}".zip -d "$TEMP_DIR"
-            mkdir -p "$FONT_DIR"/"$FONT_NAME"
-            mv "${TEMP_DIR}"/*.ttf "$FONT_DIR"/"$FONT_NAME"
-            # Update the font cache
-            fc-cache -fv
-            rm -rf "$TEMP_DIR"
-            printf "'%s' installed successfully.\n" "$FONT_NAME"
+            if wget -q "$FONT_URL" -O "$TEMP_ZIP"; then
+                mkdir -p "$FONT_DIR/$FONT_NAME"
+                if unzip -q "$TEMP_ZIP" -d "$TEMP_DIR/extracted" && \
+                   mv "$TEMP_DIR/extracted"/*.ttf "$FONT_DIR/$FONT_NAME/"; then
+                    # Update the font cache
+                    fc-cache -fv
+                    printf "'%s' installed successfully.\n" "$FONT_NAME"
+                else
+                    print_colored "$RED" "Failed to extract or move font files."
+                fi
+            else
+                print_colored "$RED" "Failed to download font."
+            fi
         else            
             printf "Font '%s' not installed. Font URL is not accessible.\n" "$FONT_NAME"
         fi
+        # Cleanup
+        rm -rf "$TEMP_DIR"
+    else
+        printf "Font '%s' is already installed.\n" "$FONT_NAME"
     fi
 }
 
 install_starship_and_fzf() {
     if ! command_exists starship; then
-        if ! curl -sS https://sh.rustup.rs | sh -s -- -y && \
-           ! curl -sS https://starship.rs/install.sh | sh; then
-            print_colored "$RED" "Something went wrong during starship install!"
+        print_colored "$YELLOW" "Installing Starship..."
+        # First install rustup if needed
+        if ! command_exists rustup; then
+            if curl -sS https://sh.rustup.rs | sh -s -- -y; then
+                # Source cargo environment
+                . "$HOME/.cargo/env"
+            else
+                print_colored "$RED" "Failed to install rustup!"
+                exit 1
+            fi
+        fi
+        # Then install starship
+        if curl -sS https://starship.rs/install.sh | sh; then
+            print_colored "$GREEN" "Starship installed successfully"
+        else
+            print_colored "$RED" "Failed to install Starship!"
             exit 1
         fi
     else
@@ -197,8 +245,13 @@ install_starship_and_fzf() {
         if [ -d "$HOME/.fzf" ]; then
             print_colored "$YELLOW" "FZF directory already exists. Skipping installation."
         else
-            git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
-            ~/.fzf/install
+            print_colored "$YELLOW" "Installing FZF..."
+            if git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && ~/.fzf/install; then
+                print_colored "$GREEN" "FZF installed successfully"
+            else
+                print_colored "$RED" "Failed to install FZF!"
+                exit 1
+            fi
         fi
     else
         printf "Fzf already installed\n"
@@ -259,8 +312,8 @@ link_config() {
 }
 
 # Main execution
+check_environment # Moved before setup_directories to check system requirements first
 setup_directories
-check_environment
 install_dependencies
 install_starship_and_fzf
 install_zoxide
