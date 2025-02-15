@@ -184,6 +184,8 @@ install_font() {
 
 install_starship_and_fzf() {
     if ! command_exists starship; then
+        if ! curl -sS https://sh.rustup.rs | sh -s -- -y && \
+           ! curl -sS https://starship.rs/install.sh | sh; then
             print_colored "$RED" "Something went wrong during starship install!"
             exit 1
         fi
