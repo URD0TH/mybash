@@ -688,4 +688,24 @@ eval "$(starship init bash)"
 eval "$(zoxide init bash)"
 
 
+## Add pyenv support
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init --path)"
+eval "$(pyenv init -)"
 
+## Add nvm support
+export NVM_DIR="$HOME/.config/nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+# ## Add Docker to wsl 
+# if grep -q microsoft /proc/version; then
+#   if ! service docker status >/dev/null 2>&1; then
+#     sudo service docker start
+#   fi
+# fi
+# export DONT_PROMPT_WSL_INSTALL=1
+
+eval $(/usr/bin/gnome-keyring-daemon --start)
+export GNOME_KEYRING_CONTROL GNOME_KEYRING_PID
