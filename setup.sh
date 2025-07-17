@@ -112,7 +112,7 @@ check_environment() {
 }
 
 install_dependencies() {
-    DEPENDENCIES='bash bash-completion tar bat tree multitail wget unzip fontconfig pyenv zoxide fzf curl git'
+    DEPENDENCIES='bash bash-completion tar bat tree multitail wget unzip fontconfig zoxide fzf curl git'
     if ! command_exists nvim; then
         DEPENDENCIES="${DEPENDENCIES} neovim"
     fi
